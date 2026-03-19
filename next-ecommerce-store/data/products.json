@@ -1,0 +1,130 @@
+[
+  {
+    "id": "iphone-14-purple",
+    "name": "iPhone 14 Pro - Deep Purple",
+    "price": 467.00,
+    "description": "Experience the iPhone 14 Pro in stunning Deep Purple. Features a 6.1-inch Super Retina XDR display with ProMotion and Always-On technology.",
+    "category": "Smartphones",
+    "image": "/iphone-14-deep-purple.webp"
+  },
+  {
+    "id": "iphone-14-black",
+    "name": "iPhone 14 Pro - Space Black",
+    "price": 450.00,
+    "description": "The classic Space Black iPhone 14 Pro. Powerful A16 Bionic chip and a pro camera system for incredible photos and videos.",
+    "category": "Smartphones",
+    "image": "/iphone-14-space-black.webp"
+  },
+  {
+    "id": "iphone-14-silver",
+    "name": "iPhone 14 Pro - Silver",
+    "price": 420.00,
+    "description": "Elegant Silver iPhone 14 Pro. Durable design with Ceramic Shield and water resistance.",
+    "category": "Smartphones",
+    "image": "/iphone-14-silver.webp"
+  },
+  {
+    "id": "iphone-14-gold",
+    "name": "iPhone 14 Pro - Gold",
+    "price": 467.00,
+    "description": "Premium Gold iPhone 14 Pro. The ultimate smartphone experience with the Dynamic Island and 48MP Main camera.",
+    "category": "Smartphones",
+    "image": "/iphone-14-gold.webp"
+  },
+  {
+    "id": "ps5-console",
+    "name": "PlayStation 5 Console",
+    "price": 690.00,
+    "description": "Experience lightning-fast loading with an ultra-high speed SSD, deeper immersion with support for haptic feedback, adaptive triggers and 3D Audio, and an all-new generation of incredible PlayStation games.",
+    "category": "Gaming",
+    "image": "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&q=80&w=400&h=500"
+  },
+  {
+    "id": "ps5-controller",
+    "name": "DualSense Wireless Controller",
+    "price": 69.99,
+    "description": "Discover a deeper, highly immersive gaming experience with the innovative new PS5 controller, featuring haptic feedback and dynamic trigger effects.",
+    "category": "Gaming Accessories",
+    "image": "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?auto=format&fit=crop&q=80&w=400&h=500"
+  },
+  {
+    "id": "macbook-air-m2",
+    "name": "MacBook Air (M2 Chip)",
+    "price": 999.00,
+    "description": "Strikingly thin and fast, the MacBook Air features the M2 chip for exceptional performance and up to 18 hours of battery life.",
+    "category": "Laptops",
+    "image": "https://images.unsplash.com/photo-1517336714460-45788a1f42ad?auto=format&fit=crop&q=80&w=400&h=500"
+  },
+  {
+    "id": "macbook-pro-m2",
+    "name": "MacBook Pro 14-inch (M2 Pro)",
+    "price": 1999.00,
+    "description": "MacBook Pro with M2 Pro or M2 Max takes power and efficiency farther than ever. With all-day battery life and a stunning Liquid Retina XDR display.",
+    "category": "Laptops",
+    "image": "https://images.unsplash.com/photo-1517336714460-45788a1f42ad?auto=format&fit=crop&q=80&w=400&h=500"
+  },
+  {
+    "id": "sony-wh-1000xm5",
+    "name": "Sony WH-1000XM5 Headphones",
+    "price": 398.00,
+    "description": "Leading noise canceling headphones with exceptional sound quality and smart features.",
+    "category": "Audio",
+    "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=400&h=500"
+  },
+  {
+    "id": "ipad-pro-m2",
+    "name": "iPad Pro 12.9-inch (M2)",
+    "price": 1099.00,
+    "description": "The ultimate iPad experience. Now with next-generation M2 performance and the world's most advanced display.",
+    "category": "Tablets",
+    "image": "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&q=80&w=400&h=500"
+  },
+  {
+    "id": "nintendo-switch-oled",
+    "name": "Nintendo Switch – OLED Model",
+    "price": 349.99,
+    "description": "Play at home on the TV or on-the-go with a vibrant 7-inch OLED screen with the Nintendo Switch – OLED Model.",
+    "category": "Gaming",
+    "image": "https://images.unsplash.com/photo-1578303372216-814059ac8959?auto=format&fit=crop&q=80&w=400&h=500"
+  },
+  {
+    "id": "apple-watch-ultra",
+    "name": "Apple Watch Ultra 2",
+    "price": 799.00,
+    "description": "The most rugged and capable Apple Watch. Designed for outdoor adventures and supercharged workouts.",
+    "category": "Wearables",
+    "image": "https://images.unsplash.com/photo-1434494878577-86c23bcb06b9?auto=format&fit=crop&q=80&w=400&h=500"
+  },
+  {
+    "id": "dell-ultrasharp-32",
+    "name": "Dell UltraSharp 32\" 4K Monitor",
+    "price": 849.00,
+    "description": "Experience world-class performance on this 31.5\" 4K monitor featuring IPS Black technology and a built-in hub.",
+    "category": "Monitors",
+    "image": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&q=80&w=400&h=500"
+  },
+  {
+    "id": "logitech-mx-master-3s",
+    "name": "Logitech MX Master 3S",
+    "price": 99.00,
+    "description": "An iconic mouse remastered. Feel every moment of your workflow with even more precision, tactility, and performance.",
+    "category": "Accessories",
+    "image": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&q=80&w=400&h=500"
+  },
+  {
+    "id": "sony-a7iv",
+    "name": "Sony Alpha a7 IV Mirrorless Camera",
+    "price": 2499.00,
+    "description": "An all-arounder that pushes the boundaries of what a full-frame camera can do. 33MP sensor and 4K 60p video.",
+    "category": "Cameras",
+    "image": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=400&h=500"
+  },
+  {
+    "id": "keychron-q1",
+    "name": "Keychron Q1 Mechanical Keyboard",
+    "price": 169.00,
+    "description": "A fully customizable mechanical keyboard with QMK/VIA support and a solid aluminum body.",
+    "category": "Accessories",
+    "image": "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?auto=format&fit=crop&q=80&w=400&h=500"
+  }
+]

@@ -1,0 +1,63 @@
+.skeletonCard {
+  background-color: var(--white);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+}
+
+.skeletonImage {
+  aspect-ratio: 3 / 4;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeletonInfo {
+  padding: 20px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skeletonCategory {
+  width: 30%;
+  height: 0.8rem;
+  background: #f0f0f0;
+  border-radius: 4px;
+}
+
+.skeletonName {
+  width: 100%;
+  height: 1.1rem;
+  background: #f0f0f0;
+  border-radius: 4px;
+  margin-bottom: 5px;
+}
+
+.skeletonPrice {
+  width: 50%;
+  height: 1.2rem;
+  background: #f0f0f0;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.skeletonButton {
+  width: 100%;
+  height: 40px;
+  background: #f0f0f0;
+  border-radius: 8px;
+  margin-top: auto;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
