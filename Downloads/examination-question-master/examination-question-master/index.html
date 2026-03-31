@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UPSS Transport Fee Manager</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --primary: #4f46e5;
+  --primary-light: #6366f1;
+  --primary-dark: #3730a3;
+  --accent: #10b981;
+  --accent-dark: #059669;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #1e293b;
+  --text-light: #64748b;
+  --border: #e2e8f0;
+  --input-bg: #ffffff;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --focus-ring: 0 0 0 3px rgba(79, 70, 229, 0.2);
+  font-size: 16px;
+}
+body.dark-mode {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --text: #f1f5f9;
+  --text-light: #94a3b8;
+  --border: #334155;
+  --input-bg: #1e293b;
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
+  --primary: #818cf8;
+  --primary-light: #a5b4fc;
+  --primary-dark: #4f46e5;
+}
+body { 
+  font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+  background: var(--bg); 
+  color: var(--text); 
+  line-height: 1.6; 
+  min-height: 100vh; 
+  transition: background-color 0.3s, color 0.3s; 
+  -webkit-font-smoothing: antialiased;
+}
+
+header { 
+  background: var(--card); 
+  color: var(--text); 
+  padding: 1.25rem 2rem; 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; 
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+header h1 { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.025em; color: var(--primary); }
+
+.btn { 
+  display: inline-flex; 
+  align-items: center; 
+  justify-content: center;
+  gap: 0.5rem; 
+  padding: 0.625rem 1.25rem; 
+  border: 1px solid transparent; 
+  border-radius: var(--radius-sm); 
+  font-size: 0.875rem; 
+  font-weight: 600; 
+  cursor: pointer; 
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+  text-decoration: none; 
+}
+.btn:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+.btn:active { transform: translateY(0); }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-outline { background: transparent; border-color: var(--border); color: var(--text); }
+.btn-outline:hover { background: var(--bg); border-color: var(--text-light); }
+.btn-success { background: var(--accent); color: #fff; }
+.btn-success:hover { background: var(--accent-dark); }
+
+.card { 
+  background: var(--card); 
+  border-radius: var(--radius); 
+  box-shadow: var(--shadow); 
+  border: 1px solid var(--border);
+  overflow: hidden; 
+  transition: box-shadow 0.3s ease;
+}
+.card:hover { box-shadow: var(--shadow-lg); }
+.card-header { padding: 1.25rem 1.5rem; background: rgba(0,0,0,0.01); border-bottom: 1px solid var(--border); }
+.card-header h2 { font-size: 1rem; font-weight: 700; color: var(--text); }
+
+nav[role="tablist"] { 
+  background: var(--card); 
+  padding: 0.5rem 1rem; 
+  display: flex; 
+  gap: 0.5rem; 
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.tab-btn { 
+  padding: 0.5rem 1rem; 
+  border-radius: var(--radius-sm); 
+  font-weight: 600; 
+  color: var(--text-light); 
+  transition: all 0.2s;
+}
+.tab-btn:hover { background: var(--bg); color: var(--text); }
+.tab-btn[aria-selected="true"] { background: var(--primary); color: #fff; }
+
+.stat-card { 
+  position: relative;
+  overflow: hidden;
+}
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 64px; height: 64px;
+  background: var(--primary);
+  opacity: 0.05;
+  border-radius: 0 0 0 100%;
+}
+
+table { border-spacing: 0; }
+thead th { background: var(--bg); color: var(--text-light); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); padding: 0.75rem 1rem; }
+tbody td { padding: 1rem; border-bottom: 1px solid var(--border); }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--bg); }
+
+.badge-status { padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: 600; font-size: 0.7rem; }
+.badge-paid { background: #d5f5e3; color: #1e8449; }
+.badge-partial { background: #fdebd0; color: #d35400; }
+.badge-unpaid { background: #fadbd8; color: #c0392b; }
+.badge-overpaid { background: #d4efdf; color: #117a65; }
+
+.progress-bar { background: #eee; border-radius: 8px; height: 10px; overflow: hidden; margin-top: 8px; }
+.progress-bar-fill { height: 100%; border-radius: 8px; transition: width 0.4s ease; background: linear-gradient(90deg, var(--accent), #2ecc71); }
+
+.toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+.toast { padding: 12px 20px; border-radius: var(--radius); color: #fff; font-weight: 600; font-size: 0.875rem; box-shadow: 0 4px 16px rgba(0,0,0,0.2); animation: slideIn 0.3s ease; max-width: 360px; }
+.toast.success { background: var(--accent); }
+.toast.error { background: var(--danger); }
+.toast.info { background: var(--primary-light); }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--card); border-radius: var(--radius); max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+.modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.modal-header h2 { font-size: 1.1rem; }
+.modal-body { padding: 20px; }
+.modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+
+.search-bar { position: relative; max-width: 400px; }
+.search-bar input { padding-left: 36px; }
+.search-bar svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--text-light); }
+
+.summary-row td { font-weight: 700; background: #eef4f9 !important; border-top: 2px solid var(--primary-light); }
+.route-header td { font-weight: 700; background: var(--primary-dark) !important; color: #fff; font-size: 0.9rem; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+.loading-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.page-loader { display: flex; align-items: center; justify-content: center; min-height: 200px; gap: 12px; color: var(--text-light); }
+.page-loader .loading-spinner { border-color: rgba(0,0,0,0.1); border-top-color: var(--primary-light); width: 32px; height: 32px; border-width: 3px; }
+
+@media (max-width: 768px) { header { padding: 12px 16px; } header h1 { font-size: 1.1rem; } main { padding: 12px; } .dashboard-grid { grid-template-columns: 1fr 1fr; } .stat-card .stat-value { font-size: 1.3rem; } .tab-btn { padding: 10px 12px; font-size: 0.8rem; } }
+@media (max-width: 480px) { .dashboard-grid { grid-template-columns: 1fr; } }
+@media print {
+  header, nav, .btn, .header-actions, .search-bar, .modal-header .btn, .modal-footer, .card-header button { display: none !important; }
+  .tab-panel { display: none !important; }
+  .tab-panel.active { display: none !important; }
+  body { background: #fff !important; color: #000 !important; }
+  .modal-overlay { position: absolute !important; display: none; background: none !important; padding: 0 !important; inset: 0 !important; }
+  .modal-overlay.open { display: block !important; }
+  .modal { box-shadow: none !important; border: 1px solid #eee !important; max-width: 100% !important; width: 100% !important; max-height: none !important; overflow: visible !important; }
+  #receipt-modal.open { display: block !important; }
+  #receipt-content { display: block !important; }
+}
+@media (prefers-contrast: high) { :root { --border: #333; --text-light: #444; } .cell-input, select.cell-select { border-color: #666; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+</style>
+</head>
+<body>
+
+<a href="#main-content" class="skip-link">Skip to main content</a>
+<div id="live-region" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+<header role="banner">
+  <h1>UPSS Transport Fee Manager</h1>
+  <div class="header-actions">
+    <button class="btn btn-outline" onclick="toggleDarkMode()" id="dark-mode-btn" title="Toggle Dark Mode">🌙</button>
+    <span class="conn-status conn-loading" id="conn-badge">Connecting...</span>
+    <button class="btn btn-outline" onclick="downloadCSVTemplate()" aria-label="Download blank CSV template">CSV Template</button>
+    <button class="btn btn-outline" onclick="exportAllCSV()" aria-label="Export all students as CSV">Export CSV</button>
+    <button class="btn btn-outline" onclick="document.getElementById('csvImportFile').click()" aria-label="Import students from CSV">Import CSV</button>
+    <input type="file" id="csvImportFile" accept=".csv" style="display:none" onchange="importCSVFromHeader(event)">
+    <button class="btn btn-outline" onclick="exportJSON()" aria-label="Export data as JSON">Backup JSON</button>
+    <button class="btn btn-outline" onclick="document.getElementById('importFile').click()" aria-label="Import data from JSON">Import JSON</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
+    <button class="btn btn-outline btn-danger" onclick="confirmClearAll()" aria-label="Clear all student data">Clear All</button>
+  </div>
+</header>
+
+<nav role="tablist" aria-label="Main navigation tabs" id="main-tabs"></nav>
+
+<main id="main-content" role="main">
+  <section class="tab-panel active" id="panel-dashboard" role="tabpanel" aria-labelledby="tab-dashboard">
+    <h2 class="sr-only">Dashboard</h2>
+    <div class="dashboard-grid" id="dashboard-stats"></div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap:16px;">
+      <div class="card">
+        <div class="card-header"><h2>By Route</h2></div>
+        <div class="card-body"><div class="table-wrap">
+          <table aria-label="Summary by route"><thead><tr><th>Route</th><th>Students</th><th>Expected</th><th>Collected</th><th>Rate</th></tr></thead><tbody id="dashboard-by-route"></tbody></table>
+        </div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h2>By School</h2></div>
+        <div class="card-body"><div class="table-wrap">
+          <table aria-label="Summary by school"><thead><tr><th>School</th><th>Students</th><th>Expected</th><th>Collected</th></tr></thead><tbody id="dashboard-by-school"></tbody></table>
+        </div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2>Payment Status Breakdown</h2></div>
+      <div class="card-body"><div id="dashboard-payment-status" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap:12px;"></div></div>
+    </div>
+  </section>
+
+  <section class="tab-panel" id="panel-pricing" role="tabpanel" aria-labelledby="tab-pricing">
+    <div class="card">
+      <div class="card-header">
+        <h2>Route Pricing Configuration</h2>
+        <button class="btn btn-success btn-sm" onclick="addRoute()">+ Add Route</button>
+      </div>
+      <div class="card-body">
+        <p style="margin-bottom:12px; font-size:0.85rem; color:var(--text-light);">Edit route names and prices below. Changes update all student calculations.</p>
+        <div class="table-wrap">
+          <table aria-label="Route pricing"><thead><tr><th>#</th><th>Route Name</th><th>To &amp; Fro</th><th>To Only</th><th>Fro Only</th><th>Status</th><th>Actions</th></tr></thead><tbody id="pricing-tbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Route panels injected by JS -->
+
+  <section class="tab-panel" id="panel-all" role="tabpanel" aria-labelledby="tab-all">
+    <div class="card">
+      <div class="card-header">
+        <h2>All Students &mdash; Master View</h2>
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="search" id="search-all" placeholder="Search students..." aria-label="Search all students" oninput="renderAllStudents()">
+        </div>
+      </div>
+      <div class="card-body"><div class="table-wrap">
+        <table aria-label="All students"><thead><tr><th>S/N</th><th>Route</th><th>Name</th><th>Phone</th><th>School</th><th>Service</th><th>Base Price</th><th>Expected</th><th>Paid Total</th><th>Balance</th><th>Status</th></tr></thead><tbody id="all-students-tbody"></tbody></table>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="tab-panel" id="panel-outstanding" role="tabpanel" aria-labelledby="tab-outstanding">
+    <div class="card">
+      <div class="card-header">
+        <h2>Outstanding Students</h2>
+        <div style="font-size:0.85rem;color:var(--text-light);" id="outstanding-count">0 students</div>
+      </div>
+      <div class="card-body"><div class="table-wrap">
+        <table aria-label="Outstanding students">
+          <thead><tr><th>S/N</th><th>Name</th><th>Route</th><th>School</th><th>Expected</th><th>Paid</th><th>Balance</th></tr></thead>
+          <tbody id="outstanding-tbody"></tbody>
+          <tfoot><tr class="summary-row"><td colspan="6" style="text-align:right">TOTAL OUTSTANDING</td><td id="outstanding-total" style="text-align:right"></td></tr></tfoot>
+        </table>
+      </div></div>
+    </div>
+  </section>
+</main>
+
+<div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+<div class="modal-overlay" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+  <div class="modal">
+    <div class="modal-header"><h2 id="confirm-title">Confirm Action</h2><button class="btn btn-sm" onclick="closeModal('confirm-modal')" aria-label="Close">&times;</button></div>
+    <div class="modal-body"><p id="confirm-message">Are you sure?</p></div>
+    <div class="modal-footer">
+      <button class="btn" style="color:var(--text);border-color:var(--border);" onclick="closeModal('confirm-modal')">Cancel</button>
+      <button class="btn btn-danger" id="confirm-ok">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="receipt-modal" role="dialog" aria-modal="true" aria-labelledby="receipt-modal-title">
+  <div class="modal" style="max-width: 500px;">
+    <div class="modal-header">
+      <h2 id="receipt-modal-title">Payment Receipt</h2>
+      <button class="btn btn-sm" onclick="closeModal('receipt-modal')" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="receipt-content">
+      <!-- Receipt content injected here -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn" style="color:var(--text);border-color:var(--border);" onclick="closeModal('receipt-modal')">Close</button>
+      <button class="btn btn-primary" onclick="window.print()">Print Receipt</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="student-modal" role="dialog" aria-modal="true" aria-labelledby="student-modal-title">
+  <div class="modal">
+    <div class="modal-header"><h2 id="student-modal-title">Add Student</h2><button class="btn btn-sm" onclick="closeModal('student-modal')" aria-label="Close">&times;</button></div>
+    <div class="modal-body">
+      <form id="student-form" onsubmit="return saveStudent(event)">
+        <input type="hidden" id="sf-route-key">
+        <input type="hidden" id="sf-id" value="">
+        <div class="form-group"><label for="sf-name">Student Name *</label><input type="text" id="sf-name" required placeholder="Full name"></div>
+        <div class="form-group"><label for="sf-phone">Phone</label><input type="tel" id="sf-phone" placeholder="08012345678"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group"><label for="sf-school">School *</label><select id="sf-school" required><option value="">Select...</option><option value="UPSS">UPSS</option><option value="CAGS">CAGS</option><option value="CAM">CAM</option></select></div>
+          <div class="form-group"><label for="sf-service">Service *</label><select id="sf-service" required><option value="">Select...</option><option value="To & Fro">To &amp; Fro</option><option value="To Only">To Only</option><option value="Fro Only">Fro Only</option></select></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group"><label for="sf-pickup">Pick Up</label><input type="text" id="sf-pickup" placeholder="Location"></div>
+          <div class="form-group"><label for="sf-dropoff">Drop Off</label><input type="text" id="sf-dropoff" placeholder="Location"></div>
+        </div>
+        <div class="form-group"><label for="sf-deduction">Deduction</label><input type="number" id="sf-deduction" value="0" min="0"></div>
+        <fieldset style="border:1px solid var(--border); border-radius:var(--radius); padding:12px; margin-bottom:16px;">
+          <legend style="font-weight:600; font-size:0.85rem; padding:0 6px;">Monthly Fees</legend>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+            <div class="form-group"><label for="sf-fee1">Month 1</label><input type="number" id="sf-fee1" min="0" value="0"></div>
+            <div class="form-group"><label for="sf-fee2">Month 2</label><input type="number" id="sf-fee2" min="0" value="0"></div>
+            <div class="form-group"><label for="sf-fee3">Month 3</label><input type="number" id="sf-fee3" min="0" value="0"></div>
+          </div>
+        </fieldset>
+        <fieldset style="border:1px solid var(--border); border-radius:var(--radius); padding:12px; margin-bottom:16px;">
+          <legend style="font-weight:600; font-size:0.85rem; padding:0 6px;">Monthly Payments</legend>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+            <div class="form-group"><label for="sf-paid1">Month 1</label><input type="number" id="sf-paid1" min="0" value="0"></div>
+            <div class="form-group"><label for="sf-paid2">Month 2</label><input type="number" id="sf-paid2" min="0" value="0"></div>
+            <div class="form-group"><label for="sf-paid3">Month 3</label><input type="number" id="sf-paid3" min="0" value="0"></div>
+          </div>
+        </fieldset>
+        <div class="form-group"><label for="sf-method">Payment Method</label><select id="sf-method"><option value="">Select...</option><option value="Cash">Cash</option><option value="Transfer">Transfer</option><option value="POS">POS</option><option value="Cheque">Cheque</option></select></div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" style="color:var(--text);border-color:var(--border);" onclick="closeModal('student-modal')">Cancel</button>
+      <button class="btn btn-success" id="save-student-btn" onclick="document.getElementById('student-form').requestSubmit()">Save Student</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// DARK MODE
+// ================================================================
+function toggleDarkMode() {
+  document.body.classList.toggle('dark-mode');
+  const isDark = document.body.classList.contains('dark-mode');
+  localStorage.setItem('darkMode', isDark);
+  updateDarkModeIcon(isDark);
+}
+
+function updateDarkModeIcon(isDark) {
+  const btn = document.getElementById('dark-mode-btn');
+  if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+}
+
+(function initDarkMode() {
+  const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+  if (savedDarkMode) {
+    document.body.classList.add('dark-mode');
+    setTimeout(() => updateDarkModeIcon(true), 0);
+  }
+})();
+
+// ================================================================
+// SUPABASE CONFIG
+// ================================================================
+const SUPA_URL = 'https://llgcliefipivxvdghigq.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsZ2NsaWVmaXBpdnh2ZGdoaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMDcxMDAsImV4cCI6MjA4ODg4MzEwMH0.jz2UUpQsCbSjy2-oytq2cneezU5gANJeqKgy-V7Yhgk';
+const HEADERS = { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+
+// ================================================================
+// SUPABASE REST HELPERS
+// ================================================================
+async function supaGet(table, query = '') {
+  const res = await fetch(`${SUPA_URL}/rest/v1/${table}?${query}`, { headers: HEADERS });
+  if (!res.ok) throw new Error(`GET ${table}: ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
+async function supaInsert(table, data) {
+  const res = await fetch(`${SUPA_URL}/rest/v1/${table}`, {
+    method: 'POST', headers: HEADERS, body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error(`INSERT ${table}: ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
+async function supaUpdate(table, match, data) {
+  const params = Object.entries(match).map(([k,v]) => `${k}=eq.${encodeURIComponent(v)}`).join('&');
+  const res = await fetch(`${SUPA_URL}/rest/v1/${table}?${params}`, {
+    method: 'PATCH', headers: HEADERS, body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error(`UPDATE ${table}: ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
+async function supaDelete(table, match) {
+  const params = Object.entries(match).map(([k,v]) => `${k}=eq.${encodeURIComponent(v)}`).join('&');
+  const res = await fetch(`${SUPA_URL}/rest/v1/${table}?${params}`, {
+    method: 'DELETE', headers: HEADERS
+  });
+  if (!res.ok) throw new Error(`DELETE ${table}: ${res.status} ${await res.text()}`);
+  return true;
+}
+
+// ================================================================
+// APP STATE (in-memory cache of DB data)
+// ================================================================
+let routes = [];
+let students = []; // flat array, all students
+
+function getRouteStudents(routeKey) {
+  return students.filter(s => s.route_key === routeKey);
+}
+
+// ================================================================
+// DATA LOADING
+// ================================================================
+async function loadAllData() {
+  try {
+    routes = await supaGet('routes', 'order=id.asc');
+    students = await supaGet('students', 'order=id.asc');
+    setConnStatus('ok');
+    return true;
+  } catch(e) {
+    console.error('Load error:', e);
+    setConnStatus('err');
+    toast('Database error: ' + e.message, 'error');
+    return false;
+  }
+}
+
+function setConnStatus(s) {
+  const badge = document.getElementById('conn-badge');
+  badge.className = 'conn-status ' + (s === 'ok' ? 'conn-ok' : s === 'err' ? 'conn-err' : 'conn-loading');
+  badge.textContent = s === 'ok' ? 'Connected' : s === 'err' ? 'Offline' : 'Connecting...';
+}
+
+// ================================================================
+// UTILITY
+// ================================================================
+function fmt(n) { return Number(n || 0).toLocaleString('en-NG'); }
+function fmtN(n) { return '\u20A6' + fmt(n); }
+
+function getBasePrice(routeKey, service) {
+  const r = routes.find(rt => rt.key === routeKey);
+  if (!r) return 0;
+  if (service === 'To & Fro') return Number(r.to_fro) || 0;
+  if (service === 'To Only') return Number(r.to_only) || 0;
+  if (service === 'Fro Only') return Number(r.fro_only) || 0;
+  return 0;
+}
+
+function calcStudent(s) {
+  const base = getBasePrice(s.route_key, s.service);
+  const fee1 = Number(s.fee1) || 0, fee2 = Number(s.fee2) || 0, fee3 = Number(s.fee3) || 0;
+  const expected = fee1 + fee2 + fee3;
+  const paid1 = Number(s.paid1) || 0, paid2 = Number(s.paid2) || 0, paid3 = Number(s.paid3) || 0;
+  const paidTotal = paid1 + paid2 + paid3;
+  const balance = expected - paidTotal;
+  let status = '';
+  if (expected === 0 && paidTotal === 0) status = 'Not Paid';
+  else if (paidTotal === 0) status = 'Not Paid';
+  else if (balance < 0) status = 'Overpaid';
+  else if (balance === 0) status = 'Paid';
+  else status = 'Partial';
+  return { base, expected, paidTotal, balance, status, deduction: Number(s.deduction) || 0 };
+}
+
+function statusBadge(st) {
+  if (!st) return '';
+  const c = st === 'Paid' ? 'badge-paid' : st === 'Partial' ? 'badge-partial' : st === 'Not Paid' ? 'badge-unpaid' : 'badge-overpaid';
+  return `<span class="badge-status ${c}">${st}</span>`;
+}
+
+function toast(msg, type = 'success') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type; t.textContent = msg; t.setAttribute('role', 'status');
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3500);
+  document.getElementById('live-region').textContent = msg;
+}
+
+// ================================================================
+// TAB SYSTEM
+// ================================================================
+let activeTab = 'dashboard';
+
+function buildTabs() {
+  const nav = document.getElementById('main-tabs');
+  let html = `<button class="tab-btn" role="tab" aria-selected="true" aria-controls="panel-dashboard" id="tab-dashboard" onclick="switchTab('dashboard')">Dashboard</button>`;
+  html += `<button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-pricing" id="tab-pricing" onclick="switchTab('pricing')">Route Pricing</button>`;
+  routes.forEach(r => {
+    const count = getRouteStudents(r.key).length;
+    // Create panel if not exists
+    if (!document.getElementById('panel-' + r.key)) {
+      const sec = document.createElement('section');
+      sec.className = 'tab-panel'; sec.id = 'panel-' + r.key;
+      sec.setAttribute('role', 'tabpanel'); sec.setAttribute('aria-labelledby', 'tab-' + r.key);
+      document.querySelector('main').insertBefore(sec, document.getElementById('panel-all'));
+    }
+    html += `<button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-${r.key}" id="tab-${r.key}" onclick="switchTab('${r.key}')">${r.name} <span class="badge" id="badge-${r.key}">${count}</span></button>`;
+  });
+  html += `<button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-all" id="tab-all" onclick="switchTab('all')">All Students</button>`;
+  html += `<button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-outstanding" id="tab-outstanding" onclick="switchTab('outstanding')">Outstanding</button>`;
+  nav.innerHTML = html;
+  // Restore active state
+  const activeBtn = document.getElementById('tab-' + activeTab);
+  if (activeBtn) activeBtn.setAttribute('aria-selected', 'true');
+}
+
+function switchTab(id) {
+  activeTab = id;
+  document.querySelectorAll('.tab-btn').forEach(b => b.setAttribute('aria-selected', 'false'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  const btn = document.getElementById('tab-' + id);
+  const panel = document.getElementById('panel-' + id);
+  if (btn) btn.setAttribute('aria-selected', 'true');
+  if (panel) panel.classList.add('active');
+  renderCurrentTab();
+}
+
+function renderCurrentTab() {
+  if (activeTab === 'dashboard') renderDashboard();
+  else if (activeTab === 'pricing') renderPricing();
+  else if (activeTab === 'all') renderAllStudents();
+  else if (activeTab === 'outstanding') renderOutstanding();
+  else renderRoutePanel(activeTab);
+}
+
+// Keyboard nav for tabs
+document.getElementById('main-tabs').addEventListener('keydown', e => {
+  const tabs = Array.from(document.querySelectorAll('.tab-btn'));
+  const idx = tabs.indexOf(document.activeElement);
+  if (idx < 0) return;
+  let next;
+  if (e.key === 'ArrowRight') next = (idx + 1) % tabs.length;
+  else if (e.key === 'ArrowLeft') next = (idx - 1 + tabs.length) % tabs.length;
+  else if (e.key === 'Home') next = 0;
+  else if (e.key === 'End') next = tabs.length - 1;
+  else return;
+  e.preventDefault(); tabs[next].focus(); tabs[next].click();
+});
+
+// ================================================================
+// DASHBOARD
+// ================================================================
+function renderDashboard() {
+  let totalStudents = 0, totalExpected = 0, totalCollected = 0;
+  let paid = 0, partial = 0, unpaid = 0, overpaid = 0;
+  const routeStats = [];
+  const schoolMap = {};
+
+  routes.forEach(route => {
+    const sts = getRouteStudents(route.key);
+    let rExp = 0, rCol = 0;
+    sts.forEach(s => {
+      const c = calcStudent(s);
+      rExp += c.expected; rCol += c.paidTotal;
+      if (c.status === 'Paid') paid++; else if (c.status === 'Partial') partial++;
+      else if (c.status === 'Not Paid') unpaid++; else if (c.status === 'Overpaid') overpaid++;
+      if (s.school) {
+        if (!schoolMap[s.school]) schoolMap[s.school] = { count: 0, expected: 0, collected: 0 };
+        schoolMap[s.school].count++; schoolMap[s.school].expected += c.expected; schoolMap[s.school].collected += c.paidTotal;
+      }
+    });
+    totalStudents += sts.length; totalExpected += rExp; totalCollected += rCol;
+    routeStats.push({ name: route.name, count: sts.length, expected: rExp, collected: rCol });
+  });
+
+  const outstanding = totalExpected - totalCollected;
+  const rate = totalExpected > 0 ? ((totalCollected / totalExpected) * 100).toFixed(1) : 0;
+
+  document.getElementById('dashboard-stats').innerHTML = `
+    <div class="stat-card" role="region" aria-label="Total Students"><h3>Total Students</h3><div class="stat-value">${totalStudents}</div></div>
+    <div class="stat-card green" role="region" aria-label="Expected Revenue"><h3>Expected Revenue</h3><div class="stat-value">${fmtN(totalExpected)}</div></div>
+    <div class="stat-card green" role="region" aria-label="Total Collected"><h3>Total Collected</h3><div class="stat-value">${fmtN(totalCollected)}</div>
+      <div class="progress-bar" role="progressbar" aria-valuenow="${rate}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar-fill" style="width:${Math.min(rate,100)}%"></div></div>
+      <div class="stat-sub">${rate}% collection rate</div></div>
+    <div class="stat-card ${outstanding > 0 ? 'orange' : 'green'}" role="region" aria-label="Outstanding"><h3>Outstanding</h3><div class="stat-value">${fmtN(outstanding)}</div></div>
+  `;
+
+  document.getElementById('dashboard-by-route').innerHTML = routeStats.map(r => {
+    const rt = r.expected > 0 ? ((r.collected / r.expected) * 100).toFixed(0) + '%' : '—';
+    return `<tr><td>${r.name}</td><td>${r.count}</td><td>${fmtN(r.expected)}</td><td>${fmtN(r.collected)}</td><td>${rt}</td></tr>`;
+  }).join('');
+
+  document.getElementById('dashboard-by-school').innerHTML = ['UPSS','CAGS','CAM'].map(sc => {
+    const d = schoolMap[sc] || { count:0, expected:0, collected:0 };
+    return `<tr><td>${sc}</td><td>${d.count}</td><td>${fmtN(d.expected)}</td><td>${fmtN(d.collected)}</td></tr>`;
+  }).join('');
+
+  document.getElementById('dashboard-payment-status').innerHTML = `
+    <div class="stat-card green"><h3>Paid in Full</h3><div class="stat-value">${paid}</div></div>
+    <div class="stat-card orange"><h3>Partial</h3><div class="stat-value">${partial}</div></div>
+    <div class="stat-card red"><h3>Not Paid</h3><div class="stat-value">${unpaid}</div></div>
+    <div class="stat-card"><h3>Overpaid</h3><div class="stat-value">${overpaid}</div></div>
+  `;
+
+  // Update badges
+  routes.forEach(r => {
+    const b = document.getElementById('badge-' + r.key);
+    if (b) b.textContent = getRouteStudents(r.key).length;
+  });
+}
+
+// ================================================================
+// PRICING
+// ================================================================
+function renderPricing() {
+  document.getElementById('pricing-tbody').innerHTML = routes.map((r, i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td><input class="cell-input" type="text" value="${r.name}" aria-label="Route name" onchange="updateRouteField(${r.id},'name',this.value)"></td>
+      <td><input class="cell-input num-input" type="number" value="${r.to_fro}" aria-label="To and Fro price" onchange="updateRouteField(${r.id},'to_fro',this.value)"></td>
+      <td><input class="cell-input num-input" type="number" value="${r.to_only}" aria-label="To Only price" onchange="updateRouteField(${r.id},'to_only',this.value)"></td>
+      <td><input class="cell-input num-input" type="number" value="${r.fro_only}" aria-label="Fro Only price" onchange="updateRouteField(${r.id},'fro_only',this.value)"></td>
+      <td><select class="cell-select" aria-label="Status" onchange="updateRouteField(${r.id},'status',this.value)">
+        <option value="Active" ${r.status==='Active'?'selected':''}>Active</option>
+        <option value="Inactive" ${r.status==='Inactive'?'selected':''}>Inactive</option>
+      </select></td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteRoute(${r.id},'${r.key}')" aria-label="Delete ${r.name}">Delete</button></td>
+    </tr>
+  `).join('');
+}
+
+async function updateRouteField(id, field, value) {
+  try {
+    const data = {};
+    data[field] = (field === 'to_fro' || field === 'to_only' || field === 'fro_only') ? Number(value) || 0 : value;
+    await supaUpdate('routes', { id }, data);
+    // Update local cache
+    const r = routes.find(rt => rt.id === id);
+    if (r) r[field] = data[field];
+    toast('Route updated');
+    if (field === 'name') buildTabs();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+async function addRoute() {
+  try {
+    const key = 'route_' + Date.now();
+    const result = await supaInsert('routes', { key, name: 'New Route', to_fro: 0, to_only: 0, fro_only: 0, status: 'Active' });
+    routes.push(result[0]);
+    buildTabs();
+    renderPricing();
+    toast('Route added');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+async function deleteRoute(id, key) {
+  showConfirm('Delete this route and all its students?', async () => {
+    try {
+      await supaDelete('routes', { id });
+      routes = routes.filter(r => r.id !== id);
+      students = students.filter(s => s.route_key !== key);
+      // Remove panel
+      const panel = document.getElementById('panel-' + key);
+      if (panel) panel.remove();
+      buildTabs();
+      renderPricing();
+      toast('Route deleted');
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  });
+}
+
+// ================================================================
+// ROUTE PANELS
+// ================================================================
+function renderRoutePanel(routeKey) {
+  const route = routes.find(r => r.key === routeKey);
+  if (!route) return;
+  const panel = document.getElementById('panel-' + routeKey);
+  if (!panel) return;
+  const sts = getRouteStudents(routeKey);
+
+  let totals = { base:0, ded:0, f1:0, f2:0, f3:0, exp:0, p1:0, p2:0, p3:0, pt:0, bal:0 };
+
+  const rows = sts.map((s, i) => {
+    const c = calcStudent(s);
+    totals.base += c.base; totals.ded += c.deduction;
+    totals.f1 += Number(s.fee1)||0; totals.f2 += Number(s.fee2)||0; totals.f3 += Number(s.fee3)||0;
+    totals.exp += c.expected;
+    totals.p1 += Number(s.paid1)||0; totals.p2 += Number(s.paid2)||0; totals.p3 += Number(s.paid3)||0;
+    totals.pt += c.paidTotal; totals.bal += c.balance;
+
+    return `<tr>
+      <td>${i+1}</td><td>${s.name}</td><td>${s.phone||''}</td><td>${s.school||''}</td><td>${s.service||''}</td>
+      <td>${s.pickup||''}</td><td>${s.dropoff||''}</td>
+      <td style="text-align:right">${fmtN(c.base)}</td><td style="text-align:right">${fmtN(c.deduction)}</td>
+      <td style="text-align:right">${fmtN(Number(s.fee1)||0)}</td><td style="text-align:right">${fmtN(Number(s.fee2)||0)}</td><td style="text-align:right">${fmtN(Number(s.fee3)||0)}</td>
+      <td style="text-align:right;font-weight:600">${fmtN(c.expected)}</td>
+      <td style="text-align:right">${fmtN(Number(s.paid1)||0)}</td><td style="text-align:right">${fmtN(Number(s.paid2)||0)}</td><td style="text-align:right">${fmtN(Number(s.paid3)||0)}</td>
+      <td style="text-align:right;font-weight:600">${fmtN(c.paidTotal)}</td>
+      <td style="text-align:right;font-weight:600;color:${c.balance>0?'var(--danger)':c.balance<0?'#117a65':'var(--accent)'}">${fmtN(c.balance)}</td>
+      <td>${statusBadge(c.status)}</td><td>${s.method||''}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-primary btn-sm" onclick="editStudent(${s.id},'${routeKey}')">Edit</button>
+        <button class="btn btn-warning btn-sm" onclick="openReceiptModal(${s.id})">Receipt</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteStudent(${s.id},'${s.name}')">Del</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  panel.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <h2>Transport Fee Register &mdash; ${route.name}</h2>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <span style="font-size:0.85rem;color:var(--text-light);">${sts.length} student${sts.length!==1?'s':''}</span>
+          <button class="btn btn-success btn-sm" onclick="openStudentModal('${routeKey}')">+ Add Student</button>
+          <button class="btn btn-primary btn-sm" onclick="downloadCSVTemplate('${routeKey}')" aria-label="Download CSV template for ${route.name}">CSV Template</button>
+          <button class="btn btn-primary btn-sm" onclick="exportRouteCSV('${routeKey}')" aria-label="Export ${route.name} students as CSV">Export CSV</button>
+          <label class="btn btn-warning btn-sm" style="margin:0;cursor:pointer;" aria-label="Import CSV into ${route.name}">Import CSV<input type="file" accept=".csv" style="display:none" onchange="importRouteCSV(event,'${routeKey}')"></label>
+        </div>
+      </div>
+      <div class="card-body" style="padding:0;">
+        <div class="table-wrap" style="max-height:70vh;overflow-y:auto;">
+          <table aria-label="Students on ${route.name}">
+            <thead><tr><th>S/N</th><th>Name</th><th>Phone</th><th>School</th><th>Service</th><th>Pick Up</th><th>Drop Off</th><th>Base Price</th><th>Deduction</th><th>Fee M1</th><th>Fee M2</th><th>Fee M3</th><th>Expected</th><th>Paid M1</th><th>Paid M2</th><th>Paid M3</th><th>Paid Total</th><th>Balance</th><th>Status</th><th>Method</th><th>Actions</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="21" style="text-align:center;padding:40px;color:var(--text-light);">No students yet. Click "+ Add Student" to begin.</td></tr>'}</tbody>
+            ${sts.length ? `<tfoot><tr class="summary-row">
+              <td colspan="7" style="text-align:right">TOTALS</td>
+              <td style="text-align:right">${fmtN(totals.base)}</td><td style="text-align:right">${fmtN(totals.ded)}</td>
+              <td style="text-align:right">${fmtN(totals.f1)}</td><td style="text-align:right">${fmtN(totals.f2)}</td><td style="text-align:right">${fmtN(totals.f3)}</td>
+              <td style="text-align:right">${fmtN(totals.exp)}</td>
+              <td style="text-align:right">${fmtN(totals.p1)}</td><td style="text-align:right">${fmtN(totals.p2)}</td><td style="text-align:right">${fmtN(totals.p3)}</td>
+              <td style="text-align:right">${fmtN(totals.pt)}</td><td style="text-align:right">${fmtN(totals.bal)}</td>
+              <td colspan="3"></td>
+            </tr></tfoot>` : ''}
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ================================================================
+// STUDENT CRUD
+// ================================================================
+function openStudentModal(routeKey, studentId = '') {
+  document.getElementById('sf-route-key').value = routeKey;
+  document.getElementById('sf-id').value = studentId;
+  const route = routes.find(r => r.key === routeKey);
+  document.getElementById('student-modal-title').textContent = studentId ? 'Edit Student' : `Add Student — ${route ? route.name : ''}`;
+  document.getElementById('student-form').reset();
+
+  if (studentId) {
+    const s = students.find(st => st.id === studentId);
+    if (s) {
+      document.getElementById('sf-name').value = s.name || '';
+      document.getElementById('sf-phone').value = s.phone || '';
+      document.getElementById('sf-school').value = s.school || '';
+      document.getElementById('sf-service').value = s.service || '';
+      document.getElementById('sf-pickup').value = s.pickup || '';
+      document.getElementById('sf-dropoff').value = s.dropoff || '';
+      document.getElementById('sf-deduction').value = s.deduction || 0;
+      document.getElementById('sf-fee1').value = s.fee1 || 0;
+      document.getElementById('sf-fee2').value = s.fee2 || 0;
+      document.getElementById('sf-fee3').value = s.fee3 || 0;
+      document.getElementById('sf-paid1').value = s.paid1 || 0;
+      document.getElementById('sf-paid2').value = s.paid2 || 0;
+      document.getElementById('sf-paid3').value = s.paid3 || 0;
+      document.getElementById('sf-method').value = s.method || '';
+    }
+  }
+  document.getElementById('student-modal').classList.add('open');
+  document.getElementById('sf-name').focus();
+}
+
+function editStudent(id, routeKey) { openStudentModal(routeKey, id); }
+
+function openReceiptModal(studentId) {
+  const s = students.find(st => st.id === studentId);
+  if (!s) return;
+  const route = routes.find(r => r.key === s.route_key);
+  const c = calcStudent(s);
+  const today = new Date().toLocaleDateString('en-NG', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const content = `
+    <div style="font-family: monospace; border: 1px solid #ccc; padding: 20px; color: #000; background: #fff;">
+      <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px;">
+        <h2 style="margin: 0; font-size: 1.2rem;">${s.school || 'SCHOOL'} TRANSPORT RECEIPT</h2>
+        <p style="margin: 5px 0 0 0; font-size: 0.8rem;">Date: ${today}</p>
+      </div>
+      <div style="margin-bottom: 15px; font-size: 0.9rem;">
+        <p><strong>Student:</strong> ${s.name}</p>
+        <p><strong>School:</strong> ${s.school}</p>
+        <p><strong>Route:</strong> ${route ? route.name : 'N/A'}</p>
+        <p><strong>Service:</strong> ${s.service}</p>
+      </div>
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 15px;">
+        <thead>
+          <tr style="border-bottom: 1px solid #333;">
+            <th style="text-align: left; padding: 5px 0;">Description</th>
+            <th style="text-align: right; padding: 5px 0;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding: 5px 0;">Month 1 Fee</td><td style="text-align: right; padding: 5px 0;">${fmtN(s.fee1)}</td></tr>
+          <tr><td style="padding: 5px 0;">Month 2 Fee</td><td style="text-align: right; padding: 5px 0;">${fmtN(s.fee2)}</td></tr>
+          <tr><td style="padding: 5px 0;">Month 3 Fee</td><td style="text-align: right; padding: 5px 0;">${fmtN(s.fee3)}</td></tr>
+          <tr style="border-top: 1px dashed #666;"><td style="padding: 5px 0;"><strong>Total Expected</strong></td><td style="text-align: right; padding: 5px 0;"><strong>${fmtN(c.expected)}</strong></td></tr>
+          <tr style="border-top: 1px solid #333;"><td style="padding: 5px 0;">Total Paid</td><td style="text-align: right; padding: 5px 0;">${fmtN(c.paidTotal)}</td></tr>
+          <tr style="border-top: 1px solid #333;"><td style="padding: 5px 0;"><strong>Balance</strong></td><td style="text-align: right; padding: 5px 0;"><strong>${fmtN(c.balance)}</strong></td></tr>
+        </tbody>
+      </table>
+      <div style="border-top: 1px solid #333; padding-top: 10px; font-size: 0.8rem; text-align: center;">
+        <p>Status: ${c.status}</p>
+        <p><em>Thank you for your patronage.</em></p>
+      </div>
+    </div>
+  `;
+  document.getElementById('receipt-content').innerHTML = content;
+  document.getElementById('receipt-modal').classList.add('open');
+}
+
+async function saveStudent(e) {
+  e.preventDefault();
+  const btn = document.getElementById('save-student-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span> Saving...';
+
+  const routeKey = document.getElementById('sf-route-key').value;
+  const id = document.getElementById('sf-id').value;
+
+  const data = {
+    route_key: routeKey,
+    name: document.getElementById('sf-name').value.trim(),
+    phone: document.getElementById('sf-phone').value.trim(),
+    school: document.getElementById('sf-school').value,
+    service: document.getElementById('sf-service').value,
+    pickup: document.getElementById('sf-pickup').value.trim(),
+    dropoff: document.getElementById('sf-dropoff').value.trim(),
+    deduction: Number(document.getElementById('sf-deduction').value) || 0,
+    fee1: Number(document.getElementById('sf-fee1').value) || 0,
+    fee2: Number(document.getElementById('sf-fee2').value) || 0,
+    fee3: Number(document.getElementById('sf-fee3').value) || 0,
+    paid1: Number(document.getElementById('sf-paid1').value) || 0,
+    paid2: Number(document.getElementById('sf-paid2').value) || 0,
+    paid3: Number(document.getElementById('sf-paid3').value) || 0,
+    method: document.getElementById('sf-method').value,
+  };
+
+  try {
+    if (id) {
+      const result = await supaUpdate('students', { id: Number(id) }, data);
+      const idx = students.findIndex(s => s.id === Number(id));
+      if (idx >= 0) students[idx] = { ...students[idx], ...data };
+      toast('Student updated');
+    } else {
+      const result = await supaInsert('students', data);
+      students.push(result[0]);
+      toast('Student added');
+    }
+    closeModal('student-modal');
+    buildTabs();
+    renderCurrentTab();
+  } catch(err) {
+    toast('Error: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save Student';
+  }
+  return false;
+}
+
+async function deleteStudent(id, name) {
+  showConfirm(`Delete student "${name}"?`, async () => {
+    try {
+      await supaDelete('students', { id });
+      students = students.filter(s => s.id !== id);
+      buildTabs();
+      renderCurrentTab();
+      toast('Student deleted');
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  });
+}
+
+// ================================================================
+// ALL STUDENTS
+// ================================================================
+function renderAllStudents() {
+  const search = (document.getElementById('search-all')?.value || '').toLowerCase();
+  const tbody = document.getElementById('all-students-tbody');
+  let html = '', sn = 0;
+
+  routes.forEach(route => {
+    if (route.status === 'Inactive') return;
+    let sts = getRouteStudents(route.key);
+    if (search) sts = sts.filter(s =>
+      (s.name||'').toLowerCase().includes(search) || (s.phone||'').toLowerCase().includes(search) ||
+      (s.school||'').toLowerCase().includes(search) || route.name.toLowerCase().includes(search)
+    );
+    if (sts.length) {
+      html += `<tr class="route-header"><td colspan="11">${route.name}</td></tr>`;
+      sts.forEach(s => {
+        sn++;
+        const c = calcStudent(s);
+        html += `<tr><td>${sn}</td><td>${route.name}</td><td>${s.name}</td><td>${s.phone||''}</td><td>${s.school||''}</td><td>${s.service||''}</td><td style="text-align:right">${fmtN(c.base)}</td><td style="text-align:right">${fmtN(c.expected)}</td><td style="text-align:right">${fmtN(c.paidTotal)}</td><td style="text-align:right;color:${c.balance>0?'var(--danger)':c.balance<0?'#117a65':'var(--accent)'}">${fmtN(c.balance)}</td><td>${statusBadge(c.status)}</td></tr>`;
+      });
+    }
+  });
+
+  tbody.innerHTML = html || '<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text-light);">No students found.</td></tr>';
+}
+
+function renderOutstanding() {
+  const outstandingList = students.map(s => {
+    const c = calcStudent(s);
+    const route = routes.find(r => r.key === s.route_key);
+    return { ...s, calc: c, routeName: route ? route.name : 'N/A' };
+  }).filter(s => s.calc.status === 'Not Paid' || s.calc.status === 'Partial')
+    .sort((a, b) => b.calc.balance - a.calc.balance);
+
+  const tbody = document.getElementById('outstanding-tbody');
+  let totalBal = 0;
+  
+  tbody.innerHTML = outstandingList.map((s, i) => {
+    totalBal += s.calc.balance;
+    return `<tr>
+      <td>${i+1}</td>
+      <td>${s.name}</td>
+      <td>${s.routeName}</td>
+      <td>${s.school || ''}</td>
+      <td style="text-align:right">${fmtN(s.calc.expected)}</td>
+      <td style="text-align:right">${fmtN(s.calc.paidTotal)}</td>
+      <td style="text-align:right;font-weight:600;color:var(--danger)">${fmtN(s.calc.balance)}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-light);">No outstanding students found.</td></tr>';
+
+  document.getElementById('outstanding-count').textContent = `${outstandingList.length} student${outstandingList.length !== 1 ? 's' : ''}`;
+  document.getElementById('outstanding-total').textContent = fmtN(totalBal);
+}
+
+// ================================================================
+// CSV HELPERS
+// ================================================================
+const CSV_COLUMNS = [
+  { key: 'name', header: 'Student Name' },
+  { key: 'phone', header: 'Phone' },
+  { key: 'school', header: 'School (UPSS/CAGS/CAM)' },
+  { key: 'service', header: 'Service (To & Fro/To Only/Fro Only)' },
+  { key: 'pickup', header: 'Pick Up' },
+  { key: 'dropoff', header: 'Drop Off' },
+  { key: 'deduction', header: 'Deduction' },
+  { key: 'fee1', header: 'Fee Month 1' },
+  { key: 'fee2', header: 'Fee Month 2' },
+  { key: 'fee3', header: 'Fee Month 3' },
+  { key: 'paid1', header: 'Paid Month 1' },
+  { key: 'paid2', header: 'Paid Month 2' },
+  { key: 'paid3', header: 'Paid Month 3' },
+  { key: 'method', header: 'Payment Method (Cash/Transfer/POS/Cheque)' },
+];
+
+function csvEscape(val) {
+  const s = String(val == null ? '' : val);
+  if (s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+
+function buildCSVString(rows, includeRoute) {
+  const headers = includeRoute ? ['Route', ...CSV_COLUMNS.map(c => c.header)] : CSV_COLUMNS.map(c => c.header);
+  const lines = [headers.map(csvEscape).join(',')];
+  rows.forEach(r => {
+    const vals = includeRoute ? [csvEscape(r._routeName), ...CSV_COLUMNS.map(c => csvEscape(r[c.key]))] : CSV_COLUMNS.map(c => csvEscape(r[c.key]));
+    lines.push(vals.join(','));
+  });
+  return lines.join('\r\n');
+}
+
+function downloadFile(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function parseCSV(text) {
+  const rows = [];
+  let current = [];
+  let field = '';
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else inQuotes = false;
+      } else { field += ch; }
+    } else {
+      if (ch === '"') { inQuotes = true; }
+      else if (ch === ',') { current.push(field.trim()); field = ''; }
+      else if (ch === '\n' || ch === '\r') {
+        if (ch === '\r' && text[i + 1] === '\n') i++;
+        current.push(field.trim()); field = '';
+        if (current.some(c => c !== '')) rows.push(current);
+        current = [];
+      } else { field += ch; }
+    }
+  }
+  current.push(field.trim());
+  if (current.some(c => c !== '')) rows.push(current);
+  return rows;
+}
+
+function mapCSVRowToStudent(headerRow, dataRow) {
+  const map = {};
+  const h = headerRow.map(v => v.toLowerCase().trim());
+  const usedIndexes = new Set();
+  CSV_COLUMNS.forEach(col => {
+    const hLower = col.header.toLowerCase();
+    // Match by exact header
+    let idx = h.indexOf(hLower);
+    // Fallback: match by key exactly (e.g. "fee1", "paid2")
+    if (idx < 0) idx = h.indexOf(col.key.toLowerCase());
+    // Fallback: match header containing the full key (e.g. "fee1" in "fee1 amount")
+    if (idx < 0) idx = h.findIndex((hh, i) => !usedIndexes.has(i) && hh.includes(col.key));
+    // Fallback: for numbered keys like fee1/paid2, match by keyword + number
+    if (idx < 0) {
+      const numMatch = col.key.match(/^([a-z]+)(\d+)$/);
+      if (numMatch) {
+        const [, keyword, num] = numMatch;
+        idx = h.findIndex((hh, i) => !usedIndexes.has(i) && hh.includes(keyword) && hh.includes(num));
+        // Last resort: find Nth column containing the keyword
+        if (idx < 0) {
+          const n = parseInt(num);
+          let count = 0;
+          idx = h.findIndex((hh, i) => {
+            if (usedIndexes.has(i) || !hh.includes(keyword)) return false;
+            return ++count === n;
+          });
+        }
+      }
+    }
+    // Fallback for non-numbered keys: match by keyword
+    if (idx < 0) {
+      const keyword = col.key.replace(/\d+/, '');
+      if (keyword === col.key) { // only if key has no digits
+        idx = h.findIndex((hh, i) => !usedIndexes.has(i) && hh.includes(keyword));
+      }
+    }
+    if (idx >= 0) usedIndexes.add(idx);
+    map[col.key] = idx >= 0 && idx < dataRow.length ? dataRow[idx] : '';
+  });
+  // Also check for a Route column
+  const routeIdx = h.findIndex(hh => hh === 'route' || hh.startsWith('route'));
+  map._route = routeIdx >= 0 && routeIdx < dataRow.length ? dataRow[routeIdx] : '';
+  return map;
+}
+
+// --- Template Download ---
+function downloadCSVTemplate(routeKey) {
+  const route = routeKey ? routes.find(r => r.key === routeKey) : null;
+  const headers = CSV_COLUMNS.map(c => c.header);
+  // Add 5 example-hint rows
+  const example = [
+    'John Doe', '08012345678', 'UPSS', 'To & Fro', 'GRA Junction', 'School Gate', '0', '50000', '50000', '50000', '50000', '0', '0', 'Transfer'
+  ];
+  const lines = [
+    headers.map(csvEscape).join(','),
+    example.map(csvEscape).join(','),
+    // 4 blank rows for convenience
+    headers.map(() => '').join(','),
+    headers.map(() => '').join(','),
+    headers.map(() => '').join(','),
+    headers.map(() => '').join(','),
+  ];
+  const name = route ? `UPSS_Template_${route.name.replace(/\s+/g, '_')}.csv` : 'UPSS_Student_Import_Template.csv';
+  downloadFile(lines.join('\r\n'), name, 'text/csv;charset=utf-8');
+  toast('CSV template downloaded');
+}
+
+// --- Export Route CSV ---
+function exportRouteCSV(routeKey) {
+  const route = routes.find(r => r.key === routeKey);
+  if (!route) return;
+  const sts = getRouteStudents(routeKey);
+  if (!sts.length) { toast('No students to export', 'info'); return; }
+  const csv = buildCSVString(sts, false);
+  downloadFile(csv, `UPSS_${route.name.replace(/\s+/g, '_')}_Students.csv`, 'text/csv;charset=utf-8');
+  toast(`Exported ${sts.length} students`);
+}
+
+// --- Export All Students CSV ---
+function exportAllCSV() {
+  if (!students.length) { toast('No students to export', 'info'); return; }
+  const rows = students.map(s => {
+    const route = routes.find(r => r.key === s.route_key);
+    return { ...s, _routeName: route ? route.name : s.route_key };
+  });
+  const csv = buildCSVString(rows, true);
+  downloadFile(csv, `UPSS_All_Students_${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8');
+  toast(`Exported ${students.length} students`);
+}
+
+// --- Import CSV into a specific route ---
+async function importRouteCSV(event, routeKey) {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  const text = await file.text();
+  const rows = parseCSV(text);
+  if (rows.length < 2) { toast('CSV file is empty or has no data rows', 'error'); return; }
+
+  const headerRow = rows[0];
+  let added = 0, skipped = 0, lastErr = '';
+
+  for (let i = 1; i < rows.length; i++) {
+    const mapped = mapCSVRowToStudent(headerRow, rows[i]);
+    if (!mapped.name) { skipped++; continue; }
+    const data = {
+      route_key: routeKey,
+      name: mapped.name,
+      phone: mapped.phone || '',
+      school: mapped.school || '',
+      service: mapped.service || '',
+      pickup: mapped.pickup || '',
+      dropoff: mapped.dropoff || '',
+      deduction: Number(mapped.deduction) || 0,
+      fee1: Number(mapped.fee1) || 0,
+      fee2: Number(mapped.fee2) || 0,
+      fee3: Number(mapped.fee3) || 0,
+      paid1: Number(mapped.paid1) || 0,
+      paid2: Number(mapped.paid2) || 0,
+      paid3: Number(mapped.paid3) || 0,
+      method: mapped.method || '',
+    };
+    try {
+      const result = await supaInsert('students', data);
+      students.push(result[0]);
+      added++;
+    } catch(e) { skipped++; console.error('CSV import row error:', e.message, data); lastErr = e.message; }
+  }
+
+  buildTabs(); renderCurrentTab();
+  let msg = `Imported ${added} student${added !== 1 ? 's' : ''}${skipped ? `, ${skipped} skipped` : ''}`;
+  if (skipped && lastErr) msg += ` (${lastErr})`;
+  toast(msg, added > 0 ? 'success' : 'error');
+}
+
+// --- Import CSV from header (auto-detect route from CSV or prompt) ---
+async function importCSVFromHeader(event) {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  const text = await file.text();
+  const rows = parseCSV(text);
+  if (rows.length < 2) { toast('CSV file is empty or has no data rows', 'error'); return; }
+
+  const headerRow = rows[0];
+  const hasRouteCol = headerRow.some(h => h.toLowerCase().trim() === 'route');
+  let added = 0, skipped = 0, lastErr = '';
+
+  for (let i = 1; i < rows.length; i++) {
+    const mapped = mapCSVRowToStudent(headerRow, rows[i]);
+    if (!mapped.name) { skipped++; continue; }
+
+    // Determine route_key
+    let routeKey = '';
+    if (hasRouteCol && mapped._route) {
+      const matchRoute = routes.find(r => r.name.toLowerCase() === mapped._route.toLowerCase() || r.key === mapped._route);
+      if (matchRoute) routeKey = matchRoute.key;
+    }
+    // Fallback: use currently active tab if it's a route
+    if (!routeKey) {
+      const activeRoute = routes.find(r => r.key === activeTab);
+      if (activeRoute) routeKey = activeRoute.key;
+    }
+    // Fallback: first route
+    if (!routeKey && routes.length) routeKey = routes[0].key;
+    if (!routeKey) { skipped++; continue; }
+
+    const data = {
+      route_key: routeKey,
+      name: mapped.name,
+      phone: mapped.phone || '',
+      school: mapped.school || '',
+      service: mapped.service || '',
+      pickup: mapped.pickup || '',
+      dropoff: mapped.dropoff || '',
+      deduction: Number(mapped.deduction) || 0,
+      fee1: Number(mapped.fee1) || 0,
+      fee2: Number(mapped.fee2) || 0,
+      fee3: Number(mapped.fee3) || 0,
+      paid1: Number(mapped.paid1) || 0,
+      paid2: Number(mapped.paid2) || 0,
+      paid3: Number(mapped.paid3) || 0,
+      method: mapped.method || '',
+    };
+    try {
+      const result = await supaInsert('students', data);
+      students.push(result[0]);
+      added++;
+    } catch(e) { skipped++; console.error('CSV import row error:', e.message, data); lastErr = e.message; }
+  }
+
+  buildTabs(); renderCurrentTab();
+  let msg = `Imported ${added} student${added !== 1 ? 's' : ''}${skipped ? `, ${skipped} skipped` : ''}`;
+  if (skipped && lastErr) msg += ` (${lastErr})`;
+  toast(msg, added > 0 ? 'success' : 'error');
+}
+
+// ================================================================
+// JSON EXPORT / IMPORT
+// ================================================================
+function exportJSON() {
+  const data = { routes, students, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `UPSS_Transport_Data_${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('Data exported');
+}
+
+async function importJSON(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async function(ev) {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data.routes || !data.students) throw new Error('Invalid format');
+
+      // Insert routes (skip duplicates by key)
+      for (const r of data.routes) {
+        const existing = routes.find(er => er.key === r.key);
+        if (!existing) {
+          try {
+            const ins = await supaInsert('routes', { key: r.key, name: r.name, to_fro: r.to_fro, to_only: r.to_only, fro_only: r.fro_only, status: r.status || 'Active' });
+            routes.push(ins[0]);
+          } catch(e) { /* skip duplicate */ }
+        }
+      }
+
+      // Insert students
+      for (const s of data.students) {
+        const sData = { route_key: s.route_key, name: s.name, phone: s.phone||'', school: s.school||'', service: s.service||'', pickup: s.pickup||'', dropoff: s.dropoff||'', deduction: Number(s.deduction)||0, fee1: Number(s.fee1)||0, fee2: Number(s.fee2)||0, fee3: Number(s.fee3)||0, paid1: Number(s.paid1)||0, paid2: Number(s.paid2)||0, paid3: Number(s.paid3)||0, method: s.method||'' };
+        try {
+          const ins = await supaInsert('students', sData);
+          students.push(ins[0]);
+        } catch(e) { /* skip errors */ }
+      }
+
+      buildTabs(); renderCurrentTab();
+      toast(`Imported ${data.students.length} students`);
+    } catch(err) { toast('Error: ' + err.message, 'error'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+async function confirmClearAll() {
+  showConfirm('This will delete ALL student records from the database. Are you sure?', async () => {
+    try {
+      // Delete all students (match all with id > 0)
+      const res = await fetch(`${SUPA_URL}/rest/v1/students?id=gt.0`, { method: 'DELETE', headers: HEADERS });
+      if (!res.ok) throw new Error('Failed to delete students');
+      students = [];
+      buildTabs(); renderCurrentTab();
+      toast('All students deleted');
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  });
+}
+
+// ================================================================
+// MODALS
+// ================================================================
+function showConfirm(message, onConfirm) {
+  document.getElementById('confirm-message').textContent = message;
+  document.getElementById('confirm-modal').classList.add('open');
+  const btn = document.getElementById('confirm-ok');
+  btn.onclick = () => { onConfirm(); document.getElementById('confirm-modal').classList.remove('open'); };
+  btn.focus();
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+  }
+});
+
+// ================================================================
+// INIT
+// ================================================================
+(async function init() {
+  setConnStatus('loading');
+  const ok = await loadAllData();
+  if (ok) {
+    buildTabs();
+    renderDashboard();
+    toast('Connected to database', 'info');
+  } else {
+    // Fallback message
+    document.getElementById('dashboard-stats').innerHTML = `
+      <div class="stat-card red" style="grid-column:1/-1;">
+        <h3>Connection Error</h3>
+        <div style="font-size:1rem;margin-top:8px;">Could not connect to the database. Please ensure the SQL migration has been run in your Supabase SQL Editor.</div>
+        <div style="margin-top:12px;"><button class="btn btn-primary" onclick="location.reload()">Retry Connection</button></div>
+      </div>
+    `;
+  }
+})();
+</script>
+</body>
+</html>
